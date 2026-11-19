@@ -1,0 +1,30 @@
+# Application and Pipeline Settings
+app:
+  title: "Beyond the Average"
+  subtitle: "A Policy-Aware, Distribution-Sensitive Analysis of Multilingual Public-Service Interpreter Waiting Times"
+  version: "1.0.0"
+
+dataset:
+  name: "NYC Open Data – 311 Interpreter Wait Time"
+  dataset_id: "dzvt-6g3v"
+  api_endpoint: "https://data.cityofnewyork.us/resource/dzvt-6g3v.json"
+  app_token: null  # Optional Socrata App Token for higher rate limits
+  batch_size: 50000
+  request_timeout_seconds: 60
+  max_retries: 3
+  retry_backoff_factor: 2.0
+
+paths:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  analytics_dir: "data/analytics"
+  metadata_dir: "data/metadata"
+  parquet_path: "data/processed/interpreter_wait_times.parquet"
+  duckdb_path: "data/analytics/interpreter_analytics.duckdb"
+  quality_report_path: "data/metadata/data_quality_report.json"
+  ingestion_metadata_path: "data/metadata/ingestion_metadata.json"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "data/metadata/app.log"

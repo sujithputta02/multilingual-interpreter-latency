@@ -1,0 +1,45 @@
+# Policy and Benchmark Configuration
+# All policy benchmarks referenced in the research must be configured here.
+
+policy_benchmarks:
+  # 6.1 The 30-Second Average Interpreter Goal
+  # NYC Office of Technology and Innovation (OTI) 2024 Language Access Implementation Plan
+  oti_average_goal:
+    name: "NYC OTI 30-Second Average Interpreter Goal"
+    citation: "NYC OTI 2024 Language Access Implementation Plan"
+    target_metric: "mean"
+    target_seconds: 30.0
+    covered_languages:
+      - "Spanish"
+      - "Cantonese"
+      - "Mandarin"
+      - "Russian"
+    description: >
+      A goal of ensuring that the average time to obtain a telephonic interpreter
+      is 30 seconds or less for the four specified languages. This is an aggregate
+      average goal, not an individual guarantee.
+    non_covered_note: >
+      Do not apply the four-language goal as though it were a universal target for other languages.
+
+  # 6.2 The 300-Second Statutory Review Threshold
+  # NYC Administrative Code §23-310
+  statutory_review_threshold:
+    name: "300-Second Statutory Review Threshold"
+    legal_basis: "NYC Administrative Code §23-310"
+    citation: "NYC Admin Code §23-310: https://codelibrary.amlegal.com/codes/newyorkcity/latest/NYCadmin/0-0-0-155398"
+    threshold_seconds: 300.0
+    field: "connect_time_sec"
+    operator: ">="
+    label: "300-Second Statutory Review Threshold"
+    description: >
+      When an interpreter-request call has a waiting time of 300 seconds or longer,
+      311 must review the call to determine whether the delay resulted from a failure
+      of its language-identification protocol.
+    prohibited_labels:
+      - "Protocol failure"
+      - "Confirmed service violation"
+      - "Discrimination incident"
+      - "Interpreter error"
+    interpretation_note: >
+      Dataset does not contain the outcome of the legally required review or the reason for the delay.
+      Label strictly as reaching the statutory review threshold.

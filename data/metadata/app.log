@@ -1,0 +1,15 @@
+2026-11-19 12:44:07,382 - refresh_pipeline - INFO - Initiating Beyond the Average data pipeline execution...
+2026-11-19 12:44:10,082 - pagination - INFO - Beginning dataset acquisition from https://data.cityofnewyork.us/resource/dzvt-6g3v.json (batch size: 25000)
+2026-11-19 12:44:10,082 - pagination - INFO - Fetching batch offset=0, limit=25000...
+2026-11-19 12:44:19,456 - pagination - INFO - Retrieved 25000 records in current batch. Total so far: 25000
+2026-11-19 12:44:19,457 - pagination - INFO - Fetching batch offset=25000, limit=25000...
+2026-11-19 12:44:25,195 - pagination - INFO - Retrieved 25000 records in current batch. Total so far: 50000
+2026-11-19 12:44:25,195 - pagination - INFO - Target record cap reached (50000/50000).
+2026-11-19 12:44:25,195 - pagination - INFO - Completed ingestion: 50000 total records collected.
+2026-11-19 12:44:25,254 - refresh_pipeline - INFO - Preserved raw snapshot at data/raw/raw_wait_times_20261119T071425Z.parquet with 50000 records.
+2026-11-19 12:44:25,303 - refresh_pipeline - INFO - Generated data quality report at data/metadata/data_quality_report.json
+2026-11-19 12:44:25,319 - refresh_pipeline - INFO - Cleaning complete: 50000 valid records, 0 excluded.
+2026-11-19 12:44:25,347 - refresh_pipeline - INFO - Derived analytical features for 50000 records.
+2026-11-19 12:44:25,365 - refresh_pipeline - INFO - Stored processed Parquet dataset at data/processed/interpreter_wait_times.parquet
+2026-11-19 12:44:25,391 - refresh_pipeline - INFO - Saved ingestion metadata at data/metadata/ingestion_metadata.json
+2026-11-19 12:44:25,519 - refresh_pipeline - INFO - Registered Parquet dataset with DuckDB at data/analytics/interpreter_analytics.duckdb

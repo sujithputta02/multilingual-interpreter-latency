@@ -1,0 +1,51 @@
+# Analytical Configuration
+
+time_periods:
+  # Analytical time-of-day categories (PRD Section 8.5 & 12.4)
+  # Documented project-defined boundaries, not official NYC policy categories.
+  categories:
+    - name: "Night"
+      start_hour: 0
+      end_hour: 6
+    - name: "Morning"
+      start_hour: 6
+      end_hour: 12
+    - name: "Afternoon"
+      start_hour: 12
+      end_hour: 18
+    - name: "Evening"
+      start_hour: 18
+      end_hour: 24
+
+quantiles:
+  median: 0.50
+  p90: 0.90
+  p95: 0.95
+  p99: 0.99
+
+sample_size:
+  min_records_for_ranking: 100
+  low_sample_warning_threshold: 50
+
+statistical_tests:
+  significance_level: 0.05
+  multi_comparison_correction: "bonferroni"
+
+wait_categories:
+  # Descriptive buckets for distribution inspection (seconds)
+  buckets:
+    - label: "0-30s (Within Goal)"
+      min: 0.0
+      max: 30.0
+    - label: "31-60s"
+      min: 30.0001
+      max: 60.0
+    - label: "61-120s"
+      min: 60.0001
+      max: 120.0
+    - label: "121-299s"
+      min: 120.0001
+      max: 299.9999
+    - label: ">=300s (Statutory Review)"
+      min: 300.0
+      max: .inf
