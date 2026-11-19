@@ -140,6 +140,16 @@ def main():
     if st.sidebar.button("Reset Slicers"):
         st.rerun()
 
+    # Check for empty filter slice
+    if filtered_df.empty:
+        render_banner(
+            "Beyond the Average: Municipal Interpreter BI Platform",
+            "A Policy-Aware, Distribution-Sensitive Analysis of NYC 311 Multilingual Public-Service Waiting Times",
+            badge="0 Calls Matching Filter"
+        )
+        st.warning("⚠️ No call records match the current slicer filter selection. Please expand your date range or reset language filters in the sidebar.")
+        return
+
     # Executive Banner
     render_banner(
         "Beyond the Average: Municipal Interpreter BI Platform",
@@ -151,22 +161,30 @@ def main():
     stats = calculate_descriptive_stats(filtered_df["connect_time_sec"])
     k1, k2, k3, k4, k5 = st.columns(5)
 
+    mean_v = stats.get("mean")
+    median_v = stats.get("median")
+    p95_v = stats.get("p95")
+
+    div_subtext = f"Divergence: +{mean_v - median_v:.1f}s" if (mean_v is not None and median_v is not None) else "No data"
+    tail_subtext = f"{p95_v / max(1.0, median_v):.1f}x Median" if (p95_v is not None and median_v is not None) else "No data"
+
     with k1:
         render_kpi("Connected Calls", f"{stats['count']:,}", "100% of recorded cohort", "NYC 311", "info")
     with k2:
-        render_kpi("Mean Wait Time", f"{stats['mean']}s", "Arithmetic Average", "Aggregate", "info")
+        render_kpi("Mean Wait Time", f"{mean_v}s" if mean_v is not None else "N/A", "Arithmetic Average", "Aggregate", "info")
     with k3:
-        render_kpi("Median Wait (P50)", f"{stats['median']}s", f"Divergence: +{stats['mean'] - stats['median']:.1f}s", "Midpoint", "success")
+        render_kpi("Median Wait (P50)", f"{median_v}s" if median_v is not None else "N/A", div_subtext, "Midpoint", "success")
     with k4:
-        render_kpi("Tail Delay (P95)", f"{stats['p95']}s", f"{stats['p95'] / max(1, stats['median']):.1f}x Median", "Severe Tail", "danger")
+        render_kpi("Tail Delay (P95)", f"{p95_v}s" if p95_v is not None else "N/A", tail_subtext, "Severe Tail", "danger")
     with k5:
         render_kpi("Calls ≥ 300s", f"{stats['long_wait_count']:,}", f"{stats['long_wait_percentage']}% of calls", "§23-310 Review", "danger" if stats['long_wait_percentage'] > 1.0 else "info")
 
-    st.markdown("""
-    <div class="bi-callout">
-        <strong>Executive Analytical Finding:</strong> Relying solely on arithmetic mean waiting times conceals severe tail latency. While the typical caller connects in <strong>{}s</strong> (median), upper-tail callers face delays of <strong>{}s</strong> (P95), with <strong>{:,} callers ({:.2f}%)</strong> crossing the statutory review threshold under NYC Administrative Code §23-310.
-    </div>
-    """.format(stats['median'], stats['p95'], stats['long_wait_count'], stats['long_wait_percentage']), unsafe_allow_html=True)
+    if mean_v is not None and median_v is not None and p95_v is not None:
+        st.markdown(f"""
+        <div class="bi-callout">
+            <strong>Executive Analytical Finding:</strong> Relying solely on arithmetic mean waiting times conceals severe tail latency. While the typical caller connects in <strong>{median_v}s</strong> (median), upper-tail callers face delays of <strong>{p95_v}s</strong> (P95), with <strong>{stats['long_wait_count']:,} callers ({stats['long_wait_percentage']:.2f}%)</strong> crossing the statutory review threshold under NYC Administrative Code §23-310.
+        </div>
+        """, unsafe_allow_html=True)
 
     # BI Module Navigation Grid
     st.markdown("### 🧭 Executive BI Portals")

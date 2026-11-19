@@ -32,16 +32,23 @@ render_banner(
 stats = calculate_descriptive_stats(df["connect_time_sec"])
 k1, k2, k3, k4, k5, k6 = st.columns(6)
 
+mean_v = stats.get("mean")
+median_v = stats.get("median")
+p90_v = stats.get("p90")
+p95_v = stats.get("p95")
+
+div_subtext = f"Divergence: {mean_v - median_v:.1f}s" if (mean_v is not None and median_v is not None) else "No data"
+
 with k1:
     render_kpi("Connected Calls", f"{stats['count']:,}", "Active Cohort", "Total", "info")
 with k2:
-    render_kpi("Mean Wait Time", f"{stats['mean']}s", "Arithmetic Average", "Mean", "info")
+    render_kpi("Mean Wait Time", f"{mean_v}s" if mean_v is not None else "N/A", "Arithmetic Average", "Mean", "info")
 with k3:
-    render_kpi("Median Wait (P50)", f"{stats['median']}s", f"Divergence: {stats['mean'] - stats['median']:.1f}s", "Midpoint", "success")
+    render_kpi("Median Wait (P50)", f"{median_v}s" if median_v is not None else "N/A", div_subtext, "Midpoint", "success")
 with k4:
-    render_kpi("90th Percentile (P90)", f"{stats['p90']}s", "Upper 10% Wait", "P90", "info")
+    render_kpi("90th Percentile (P90)", f"{p90_v}s" if p90_v is not None else "N/A", "Upper 10% Wait", "P90", "info")
 with k5:
-    render_kpi("95th Percentile (P95)", f"{stats['p95']}s", "Upper 5% Wait", "Tail", "danger")
+    render_kpi("95th Percentile (P95)", f"{p95_v}s" if p95_v is not None else "N/A", "Upper 5% Wait", "Tail", "danger")
 with k6:
     render_kpi("Calls ≥ 300s", f"{stats['long_wait_count']:,}", f"{stats['long_wait_percentage']}% of calls", "§23-310 Trigger", "danger" if stats['long_wait_percentage'] > 1.0 else "info")
 

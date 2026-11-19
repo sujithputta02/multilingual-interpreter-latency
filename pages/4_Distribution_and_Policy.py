@@ -45,12 +45,14 @@ with tab_policy:
         for idx, row in oti_df.iterrows():
             with sc_cols[idx]:
                 meets = row["satisfies_average_goal"]
-                badge_t = "COMPLIANT" if meets else "ABOVE TARGET"
-                b_type = "success" if meets else "danger"
-                delta_str = f"{row['delta_from_goal_sec']:+.1f}s vs 30s target"
+                badge_t = "COMPLIANT" if meets else ("ABOVE TARGET" if meets is False else "NO DATA")
+                b_type = "success" if meets else ("danger" if meets is False else "info")
+                delta_v = row.get("delta_from_goal_sec")
+                delta_str = f"{delta_v:+.1f}s vs 30s target" if delta_v is not None else "No data"
+                mean_disp = f"{row['observed_mean_sec']}s" if row.get("observed_mean_sec") is not None else "N/A"
                 render_kpi(
                     f"{row['language']} Queue",
-                    f"{row['observed_mean_sec']}s",
+                    mean_disp,
                     delta_str,
                     badge_t,
                     b_type
