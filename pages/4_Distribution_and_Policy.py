@@ -15,26 +15,27 @@ from src.analytics.sensitivity_analysis import (
     sample_size_sensitivity,
     temporal_period_sensitivity,
 )
-from src.storage.parquet_manager import load_processed_parquet
-from src.utils.ui import apply_bi_theme, render_kpi, render_banner
+from src.utils.filters import render_global_slicers
+from src.utils.ui import apply_bi_theme, render_kpi, render_banner, render_active_filter_strip
 
 st.set_page_config(page_title="Distribution & Policy | Beyond the Average", layout="wide")
 apply_bi_theme()
 
-df = st.session_state.get("filtered_df")
-if df is None:
-    raw = load_processed_parquet()
-    if raw is not None:
-        df = raw
-    else:
-        st.warning("Data warehouse not loaded. Please return to the Home page.")
-        st.stop()
+raw_df, df = render_global_slicers()
+if raw_df.empty:
+    st.warning("Data warehouse not loaded. Please return to the Home page.")
+    st.stop()
 
 render_banner(
     "4. Distribution Sensitivity & Legal Benchmarks",
     "Exposing Information Concealed by Mean-Only Reporting & Evaluating Municipal Policy Targets",
     badge="Policy Scorecard"
 )
+render_active_filter_strip(len(df), len(raw_df))
+
+if df.empty:
+    st.warning("⚠️ No records match your active slicers.")
+    st.stop()
 
 tab_policy, tab_dist, tab_comp = st.tabs([
     "🏛️ Municipal Legal & Policy Benchmarks",

@@ -9,26 +9,28 @@ from src.analytics.temporal_analysis import (
     compute_day_of_week_summary,
     compute_hour_weekday_heatmap_matrix,
 )
-from src.storage.parquet_manager import load_processed_parquet
-from src.utils.ui import apply_bi_theme, render_kpi, render_banner
+from src.analytics.language_analysis import compute_language_summary
+from src.utils.filters import render_global_slicers
+from src.utils.ui import apply_bi_theme, render_kpi, render_banner, render_active_filter_strip
 
 st.set_page_config(page_title="Temporal Analysis | Beyond the Average", layout="wide")
 apply_bi_theme()
 
-df = st.session_state.get("filtered_df")
-if df is None:
-    raw = load_processed_parquet()
-    if raw is not None:
-        df = raw
-    else:
-        st.warning("Data warehouse not loaded. Please return to the Home page.")
-        st.stop()
+raw_df, df = render_global_slicers()
+if raw_df.empty:
+    st.warning("Data warehouse not loaded. Please return to the Home page.")
+    st.stop()
 
 render_banner(
     "3. Temporal Latency Dynamics",
     "Investigating Diurnal, Day-of-Week, and Operational Period Variations in Interpreter Wait Times",
     badge="Temporal Slicing"
 )
+render_active_filter_strip(len(df), len(raw_df))
+
+if df.empty:
+    st.warning("⚠️ No records match your active slicers.")
+    st.stop()
 
 tab1, tab2, tab3 = st.tabs(["🕒 Diurnal (Hourly) Trends", "📅 Day-of-Week Patterns", "🔥 Hour × Weekday Heatmap Matrix"])
 
@@ -84,6 +86,22 @@ with tab1:
             )
             fig_prop.update_layout(template="plotly_white", margin=dict(l=20, r=20, t=20, b=20))
             st.plotly_chart(fig_prop, use_container_width=True)
+
+        # Interactive Peak-Hour Language Drill-Down Action
+        st.markdown("---")
+        st.markdown("#### 🎯 Hour Drill-Down Action: Top Delayed Languages by Hour")
+        peak_hr_default = int(hourly_df.sort_values("mean", ascending=False).iloc[0]["hour"])
+        inspect_hr = st.slider("Select Hour of Day to Inspect (0–23):", min_value=0, max_value=23, value=peak_hr_default)
+        hr_slice = df[df["hour"] == inspect_hr]
+        if not hr_slice.empty:
+            hr_langs = compute_language_summary(hr_slice, min_sample_size=20, sort_by="mean", ascending=False).head(8)
+            st.dataframe(
+                hr_langs[["language", "count", "mean", "median", "p95", "calls_ge_300s", "pct_ge_300s"]].rename(columns={
+                    "language": "Language", "count": f"Calls at {inspect_hr:02d}:00", "mean": "Mean (s)",
+                    "median": "Median (s)", "p95": "P95 (s)", "calls_ge_300s": "≥300s", "pct_ge_300s": "Review Rate (%)"
+                }),
+                use_container_width=True
+            )
 
 with tab2:
     st.subheader("Day-of-Week Operational Comparison")

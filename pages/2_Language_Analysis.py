@@ -6,26 +6,27 @@ import plotly.graph_objects as go
 
 from src.analytics.language_analysis import compute_language_summary, compare_languages
 from src.analytics.statistical_tests import run_kruskal_wallis_test, run_pairwise_mann_whitney
-from src.storage.parquet_manager import load_processed_parquet
-from src.utils.ui import apply_bi_theme, render_kpi, render_banner
+from src.utils.filters import render_global_slicers
+from src.utils.ui import apply_bi_theme, render_kpi, render_banner, render_active_filter_strip
 
 st.set_page_config(page_title="Language Analysis | Beyond the Average", layout="wide")
 apply_bi_theme()
 
-df = st.session_state.get("filtered_df")
-if df is None:
-    raw = load_processed_parquet()
-    if raw is not None:
-        df = raw
-    else:
-        st.warning("Data warehouse not loaded. Please return to the Home page.")
-        st.stop()
+raw_df, df = render_global_slicers()
+if raw_df.empty:
+    st.warning("Data warehouse not loaded. Please return to the Home page.")
+    st.stop()
 
 render_banner(
     "2. Language Cohort Analysis",
     "Investigating Disparities in Typical and Prolonged Connection Delays across Requested Languages",
     badge="Comparative Analytics"
 )
+render_active_filter_strip(len(df), len(raw_df))
+
+if df.empty:
+    st.warning("⚠️ No records match your active slicers.")
+    st.stop()
 
 # Filter controls
 c1, c2, c3 = st.columns([2, 1, 1])
@@ -80,13 +81,28 @@ else:
 
 st.markdown("---")
 
-# Visual Drill-down
+# Visual Drill-down with Quick Compare Actions
 st.subheader("Comparative Distribution Box Plots")
 st.caption("Visualizing the spread, median, quartiles, and upper tail across selected language cohorts.")
 
 available_langs = sorted(df["language"].dropna().unique().tolist())
 top_default = summary_df.head(6)["language"].tolist() if not summary_df.empty else available_langs[:6]
-compare_sel = st.multiselect("Select Languages to Drill Down:", options=available_langs, default=top_default)
+
+qa1, qa2, qa3 = st.columns(3)
+if qa1.button("🔍 Load Turkish vs. Yiddish (+109s P95 gap)", use_container_width=True):
+    st.session_state["lang_compare_sel"] = [l for l in ["Turkish", "Yiddish"] if l in available_langs]
+    st.rerun()
+if qa2.button("🔍 Load Mandarin vs. Dari (+92.6s P95 gap)", use_container_width=True):
+    st.session_state["lang_compare_sel"] = [l for l in ["Mandarin", "Dari"] if l in available_langs]
+    st.rerun()
+if qa3.button("🏛️ Load OTI 4 Languages", use_container_width=True):
+    st.session_state["lang_compare_sel"] = [l for l in ["Spanish", "Cantonese", "Mandarin", "Russian"] if l in available_langs]
+    st.rerun()
+
+if "lang_compare_sel" not in st.session_state or not any(l in available_langs for l in st.session_state["lang_compare_sel"]):
+    st.session_state["lang_compare_sel"] = top_default
+
+compare_sel = st.multiselect("Select Languages to Drill Down:", options=available_langs, key="lang_compare_sel")
 
 if compare_sel:
     sub_df = df[df["language"].isin(compare_sel)]

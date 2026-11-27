@@ -12,26 +12,23 @@ from src.utils.exports import (
 from src.analytics.language_analysis import compute_language_summary
 from src.analytics.temporal_analysis import compute_monthly_trend
 from src.analytics.policy_analysis import evaluate_oti_average_goal
-from src.storage.parquet_manager import load_processed_parquet
-from src.utils.ui import apply_bi_theme, render_kpi, render_banner
+from src.utils.filters import render_global_slicers
+from src.utils.ui import apply_bi_theme, render_kpi, render_banner, render_active_filter_strip
 
 st.set_page_config(page_title="Governance & Methodology | Beyond the Average", layout="wide")
 apply_bi_theme()
 
-df = st.session_state.get("filtered_df")
-if df is None:
-    raw = load_processed_parquet()
-    if raw is not None:
-        df = raw
-    else:
-        st.warning("Data warehouse not loaded. Please return to the Home page.")
-        st.stop()
+raw_df, df = render_global_slicers()
+if raw_df.empty:
+    st.warning("Data warehouse not loaded. Please return to the Home page.")
+    st.stop()
 
 render_banner(
     "5. Data Quality, Governance & Exports",
     "Complete Transparency, IEEE Literature Evidence Base, and Verifiable Data Governance",
     badge="Audit & Governance"
 )
+render_active_filter_strip(len(df), len(raw_df))
 
 tab_quality, tab_lit, tab_dict, tab_export = st.tabs([
     "🛡️ Data Quality & Audit Trail",
