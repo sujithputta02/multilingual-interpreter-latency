@@ -1,10 +1,10 @@
 {
-  "report_generated_utc": "2026-11-19T07:14:25.303485+00:00",
+  "report_generated_utc": "2026-11-27T13:15:15.863971+00:00",
   "source_metadata": {
     "id": "dzvt-6g3v",
     "name": "311 Interpreter Wait Time",
     "rowsUpdatedAt": 1794943530,
-    "viewCount": 2882,
+    "viewCount": 2936,
     "columns": [
       "call_time",
       "language",
@@ -12,35 +12,35 @@
     ],
     "metadata_retrieval_status": "success"
   },
-  "original_record_count": 50000,
-  "valid_record_count": 50000,
-  "invalid_record_count": 0,
+  "original_record_count": 1061195,
+  "valid_record_count": 1061097,
+  "invalid_record_count": 98,
   "missing_values": {
-    "call_time": 0,
-    "language": 0,
+    "call_time": 3,
+    "language": 98,
     "connect_time_sec": 0
   },
   "anomalies": {
     "non_numeric_connect_time": 0,
     "negative_connect_time": 0,
     "invalid_timestamps": 0,
-    "identical_triplet_records_preserved": 220
+    "identical_triplet_records_preserved": 13160
   },
   "extreme_values_retained": {
-    "statutory_threshold_300s_or_more": 177,
-    "severe_threshold_1800s_or_more": 0,
-    "max_connect_time_sec": 771.0,
+    "statutory_threshold_300s_or_more": 1652,
+    "severe_threshold_1800s_or_more": 1,
+    "max_connect_time_sec": 2278.0,
     "min_connect_time_sec": 0.0
   },
   "coverage": {
     "min_date": "2023-01-01T00:18:40",
-    "max_date": "2023-03-23T11:03:45",
-    "distinct_languages_observed": 56
+    "max_date": "2026-10-31T21:42:45",
+    "distinct_languages_observed": 112
   },
   "exclusions": {
     "negative_wait_times_excluded": 0,
     "unparseable_timestamps_excluded": 0,
-    "null_values_excluded": 0,
+    "null_values_excluded": 98,
     "justification": "Records with null values or negative waiting times violate physical queue assumptions and are excluded from core statistical analysis. All exclusions are tracked."
   }
 }

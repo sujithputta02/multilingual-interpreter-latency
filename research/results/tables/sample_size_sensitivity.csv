@@ -1,0 +1,6 @@
+min_sample_threshold,qualifying_languages,excluded_languages,calls_covered,calls_coverage_pct,highest_mean_language,highest_mean_sec,highest_p95_language,highest_p95_sec
+30,54,58,1060616,99.95,Fulani,144.36,Fulani,548.7
+50,47,65,1060350,99.93,Fulani,144.36,Fulani,548.7
+100,40,72,1059819,99.88,Moroccan Arabic,78.5,Moroccan Arabic,415.6
+500,20,92,1054973,99.42,Wolof,59.77,Wolof,328.85
+1000,15,97,1051022,99.05,Uzbek,33.63,Uzbek,217.6

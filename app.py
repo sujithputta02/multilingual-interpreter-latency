@@ -55,7 +55,7 @@ def main():
     if st.sidebar.button("🔄 Sync Live Open Data Feed", help="Fetch latest records from NYC Open Data API"):
         with st.spinner("Executing ETL ingestion pipeline..."):
             try:
-                res = run_full_pipeline(max_records=50000, force_download=True)
+                res = run_full_pipeline(max_records=None, force_download=True)
                 st.cache_data.clear()
                 st.sidebar.success(f"Synced {res['total_processed_records']:,} records!")
                 st.rerun()

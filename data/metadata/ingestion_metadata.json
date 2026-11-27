@@ -1,17 +1,17 @@
 {
   "dataset_name": "NYC 311 Interpreter Wait Time",
   "dataset_id": "dzvt-6g3v",
-  "retrieval_timestamp_utc": "2026-11-19T07:14:25.365409+00:00",
-  "total_raw_records": 50000,
-  "total_processed_records": 50000,
-  "excluded_records": 0,
-  "raw_snapshot_path": "data/raw/raw_wait_times_20261119T071425Z.parquet",
+  "retrieval_timestamp_utc": "2026-11-27T13:15:16.948570+00:00",
+  "total_raw_records": 1061195,
+  "total_processed_records": 1061097,
+  "excluded_records": 98,
+  "raw_snapshot_path": "data/raw/raw_wait_times_20261127T131515Z.parquet",
   "processed_parquet_path": "data/processed/interpreter_wait_times.parquet",
   "online_metadata": {
     "id": "dzvt-6g3v",
     "name": "311 Interpreter Wait Time",
     "rowsUpdatedAt": 1794943530,
-    "viewCount": 2882,
+    "viewCount": 2936,
     "columns": [
       "call_time",
       "language",
@@ -23,6 +23,6 @@
     "python_version": "3.11.14 (main, Oct  9 2025, 16:16:55) [Clang 17.0.0 (clang-1700.6.3.2)]",
     "platform": "macOS-27.0.1-arm64-arm-64bit",
     "processor": "arm",
-    "timestamp_utc": "2026-11-19T07:14:25.391140+00:00"
+    "timestamp_utc": "2026-11-27T13:15:16.974121+00:00"
   }
 }

@@ -1,0 +1,5 @@
+language,record_count,observed_mean_sec,reference_goal_sec,delta_from_goal_sec,satisfies_average_goal,observed_median_sec,observed_p90_sec,observed_p95_sec,calls_ge_300s,pct_ge_300s
+Spanish,739417,4.32,30.0,-25.68,True,3.0,5.0,8.0,219,0.03
+Cantonese,39352,9.38,30.0,-20.62,True,3.0,9.0,30.0,49,0.12
+Mandarin,124123,20.92,30.0,-9.08,True,3.0,57.0,150.0,266,0.21
+Russian,81992,19.12,30.0,-10.88,True,3.0,30.0,98.0,467,0.57

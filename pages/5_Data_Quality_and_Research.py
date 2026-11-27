@@ -4,7 +4,14 @@ import streamlit as st
 import pandas as pd
 
 from src.utils.metadata import load_json
+from src.utils.exports import (
+    build_analysis_metadata_bundle,
+    render_language_comparison_png,
+    render_monthly_trend_png,
+)
 from src.analytics.language_analysis import compute_language_summary
+from src.analytics.temporal_analysis import compute_monthly_trend
+from src.analytics.policy_analysis import evaluate_oti_average_goal
 from src.storage.parquet_manager import load_processed_parquet
 from src.utils.ui import apply_bi_theme, render_kpi, render_banner
 
@@ -110,26 +117,68 @@ with tab_dict:
     """)
 
 with tab_export:
-    st.subheader("Research Data & Report Exports")
-    st.markdown("Download active filtered data or summary statistical tables for publication or external audit.")
+    st.subheader("Research Data, Figures & Reproducibility Exports (PRD Section 14 & 15.2)")
+    st.markdown("Download active filtered data, aggregated tables, publication-ready PNG figures, and reproducibility metadata.")
 
-    c_exp1, c_exp2 = st.columns(2)
+    c_exp1, c_exp2, c_exp3 = st.columns(3)
     with c_exp1:
-        st.markdown("#### Filtered Call Records (CSV)")
-        csv_data = df.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            label="📥 Download Active Slice (CSV)",
-            data=csv_data,
-            file_name="filtered_interpreter_calls.csv",
-            mime="text/csv"
-        )
-    with c_exp2:
-        st.markdown("#### Language Summary Statistics (CSV)")
+        st.markdown("#### Tabular Data (CSV)")
         lang_stats = compute_language_summary(df, min_sample_size=1)
-        lang_csv = lang_stats.to_csv(index=False).encode("utf-8")
         st.download_button(
-            label="📥 Download Language Summary (CSV)",
-            data=lang_csv,
+            label="📥 Language Summary (CSV)",
+            data=lang_stats.to_csv(index=False).encode("utf-8"),
             file_name="language_summary_metrics.csv",
             mime="text/csv"
         )
+        monthly_stats = compute_monthly_trend(df)
+        st.download_button(
+            label="📥 Monthly Trend Summary (CSV)",
+            data=monthly_stats.to_csv(index=False).encode("utf-8"),
+            file_name="monthly_trend_metrics.csv",
+            mime="text/csv"
+        )
+        oti_stats = evaluate_oti_average_goal(df)
+        st.download_button(
+            label="📥 OTI 30s Policy Benchmark (CSV)",
+            data=oti_stats.to_csv(index=False).encode("utf-8"),
+            file_name="oti_policy_benchmark.csv",
+            mime="text/csv"
+        )
+
+    with c_exp2:
+        st.markdown("#### Research Figures (PNG)")
+        if not lang_stats.empty:
+            lang_png = render_language_comparison_png(lang_stats, top_n=10)
+            st.download_button(
+                label="🖼️ Language Comparison (PNG)",
+                data=lang_png,
+                file_name="language_comparison_mean_p95.png",
+                mime="image/png"
+            )
+        if not monthly_stats.empty:
+            monthly_png = render_monthly_trend_png(monthly_stats)
+            st.download_button(
+                label="🖼️ Monthly Trajectory (PNG)",
+                data=monthly_png,
+                file_name="monthly_waiting_time_trend.png",
+                mime="image/png"
+            )
+
+    with c_exp3:
+        st.markdown("#### Reproducibility & Slice (JSON / CSV)")
+        meta_bundle = build_analysis_metadata_bundle(df)
+        st.download_button(
+            label="📋 Analysis Metadata (JSON)",
+            data=json.dumps(meta_bundle, indent=2).encode("utf-8"),
+            file_name="analysis_reproducibility_metadata.json",
+            mime="application/json"
+        )
+        if len(df) <= 100000:
+            st.download_button(
+                label="📥 Filtered Calls Sample (CSV)",
+                data=df.to_csv(index=False).encode("utf-8"),
+                file_name="filtered_interpreter_calls.csv",
+                mime="text/csv"
+            )
+        else:
+            st.caption("ℹ️ Full slice (>100k rows) is available directly in `data/processed/interpreter_wait_times.parquet`; use summary CSVs above for fast export.")

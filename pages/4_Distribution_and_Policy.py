@@ -6,6 +6,15 @@ import plotly.graph_objects as go
 
 from src.analytics.distribution_analysis import compute_mean_median_disparity, compute_ecdf
 from src.analytics.policy_analysis import evaluate_oti_average_goal, evaluate_statutory_review_threshold
+from src.analytics.comparison_analysis import (
+    compute_metric_ranking_shifts,
+    find_similar_mean_divergent_tail_pairs,
+    compute_confidence_intervals,
+)
+from src.analytics.sensitivity_analysis import (
+    sample_size_sensitivity,
+    temporal_period_sensitivity,
+)
 from src.storage.parquet_manager import load_processed_parquet
 from src.utils.ui import apply_bi_theme, render_kpi, render_banner
 
@@ -27,7 +36,11 @@ render_banner(
     badge="Policy Scorecard"
 )
 
-tab_policy, tab_dist = st.tabs(["🏛️ Municipal Legal & Policy Benchmarks", "📊 Distribution Sensitivity (Mean vs. Median)"])
+tab_policy, tab_dist, tab_comp = st.tabs([
+    "🏛️ Municipal Legal & Policy Benchmarks",
+    "📊 Distribution Sensitivity (Mean vs. Median)",
+    "🔬 Ranking Shifts & Sensitivity (Phase 6)",
+])
 
 with tab_policy:
     st.subheader("Benchmark 1: NYC OTI 30-Second Average Target")
@@ -210,3 +223,66 @@ with tab_dist:
             margin=dict(l=20, r=20, t=20, b=20)
         )
         st.plotly_chart(fig_ecdf, use_container_width=True)
+
+with tab_comp:
+    st.subheader("Mean-Only vs. Distribution-Sensitive Ranking Shifts (PRD Section 9)")
+    st.caption("Identifies languages whose relative performance ranking changes dramatically when moving from Mean-only to P95 tail and §23-310 review-rate reporting.")
+
+    min_n_comp = st.slider("Minimum Sample Size for Ranking Stability:", min_value=30, max_value=1000, value=100, step=10)
+    shifts_df = compute_metric_ranking_shifts(df, min_sample_size=min_n_comp)
+    if not shifts_df.empty:
+        st.dataframe(
+            shifts_df[[
+                "language", "count", "mean", "median", "p95", "pct_ge_300s",
+                "rank_mean", "rank_p95", "rank_pct_300s", "shift_mean_to_p95"
+            ]].rename(columns={
+                "language": "Language",
+                "count": "Calls",
+                "mean": "Mean (s)",
+                "median": "Median (s)",
+                "p95": "P95 (s)",
+                "pct_ge_300s": "≥300s (%)",
+                "rank_mean": "Mean Rank",
+                "rank_p95": "P95 Rank",
+                "rank_pct_300s": "≥300s Rank",
+                "shift_mean_to_p95": "Rank Shift (P95 - Mean)",
+            }),
+            use_container_width=True
+        )
+    else:
+        st.info("No languages meet the minimum sample threshold.")
+
+    st.markdown("---")
+    st.subheader("Similar-Mean, Divergent-Tail Language Pairs (PRD Section 9.3)")
+    st.caption("Real language pairs with comparable arithmetic means (within 5s) but substantially different P95 upper tails (≥ 30s difference).")
+    pairs_df = find_similar_mean_divergent_tail_pairs(df, min_sample_size=min_n_comp, mean_tolerance_sec=5.0, min_p95_gap_sec=30.0)
+    if not pairs_df.empty:
+        st.dataframe(pairs_df.head(15), use_container_width=True)
+    else:
+        st.info("No language pairs met the similar-mean / divergent-tail criteria in the current slice.")
+
+    st.markdown("---")
+    st.subheader("95% Confidence Intervals (Active Cohort)")
+    ci_res = compute_confidence_intervals(df["connect_time_sec"])
+    if ci_res.get("count", 0) > 0:
+        ci_tbl = pd.DataFrame([
+            {"Metric": "Mean (s)", "Estimate": ci_res["mean"], "95% CI Lower": ci_res["mean_ci"][0], "95% CI Upper": ci_res["mean_ci"][1], "Method": "Normal/t"},
+            {"Metric": "Median (s)", "Estimate": ci_res["median"], "95% CI Lower": ci_res["median_ci"][0], "95% CI Upper": ci_res["median_ci"][1], "Method": "Bootstrap"},
+            {"Metric": "P90 (s)", "Estimate": ci_res["p90"], "95% CI Lower": ci_res["p90_ci"][0], "95% CI Upper": ci_res["p90_ci"][1], "Method": "Bootstrap"},
+            {"Metric": "P95 (s)", "Estimate": ci_res["p95"], "95% CI Lower": ci_res["p95_ci"][0], "95% CI Upper": ci_res["p95_ci"][1], "Method": "Bootstrap"},
+            {"Metric": "≥ 300s Rate (%)", "Estimate": ci_res["pct_ge_300s"], "95% CI Lower": ci_res["pct_ge_300s_ci"][0], "95% CI Upper": ci_res["pct_ge_300s_ci"][1], "Method": "Wilson Score"},
+        ])
+        st.dataframe(ci_tbl, use_container_width=True)
+
+    st.markdown("---")
+    c_s1, c_s2 = st.columns(2)
+    with c_s1:
+        st.subheader("Sample-Size Cutoff Sensitivity")
+        sens_df = sample_size_sensitivity(df)
+        if not sens_df.empty:
+            st.dataframe(sens_df, use_container_width=True)
+    with c_s2:
+        st.subheader("Temporal Year-by-Year Sensitivity")
+        yr_df = temporal_period_sensitivity(df)
+        if not yr_df.empty:
+            st.dataframe(yr_df, use_container_width=True)

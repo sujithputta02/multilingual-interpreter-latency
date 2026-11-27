@@ -3,8 +3,8 @@
 > **A Policy-Aware, Distribution-Sensitive Analysis of Multilingual Public-Service Interpreter Waiting Times**
 
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/pytest-15%20passed-brightgreen.svg)]()
-[![Dataset](https://img.shields.io/badge/NYC%20Open%20Data-dzvt--6g3v-orange.svg)](https://data.cityofnewyork.us/City-Government/311-Interpreter-Wait-Time/dzvt-6g3v)
+[![Tests](https://img.shields.io/badge/pytest-20%20passed-brightgreen.svg)]()
+[![Dataset](https://img.shields.io/badge/NYC%20Open%20Data-1.06M%20Records-orange.svg)](https://data.cityofnewyork.us/City-Government/311-Interpreter-Wait-Time/dzvt-6g3v)
 
 ---
 
@@ -18,40 +18,24 @@ The platform moves beyond conventional aggregate (mean-only) reporting to uncove
 
 ---
 
-## 2. Completed 50% Milestone Deliverables
+## 2. Completed 90% Milestone Deliverables
 
-This repository delivers the **50% milestone** of the complete project specification as mandated by the PRD:
+This repository delivers the **90% milestone** (Phases 0–7 complete) of the complete project specification as mandated by the PRD:
 
-- [x] **Phase 0: Research Foundation & IEEE Literature Survey Audit**
-  - Systematic audit of the 2023–2026 IEEE corpus on queueing delays and service-level thresholds.
-  - Literature matrix and research-gap documentation in `research/literature_review/ieee_survey_audit.md`.
-- [x] **Phase 1: Architecture & Repository Foundation**
-  - Clean modular architecture, configuration files (`settings.yaml`, `policy_thresholds.yaml`, `analysis_config.yaml`).
-  - Structured logging, environment reproducibility capture, and virtual environment setup.
-- [x] **Phase 2: Live Ingestion Pipeline**
-  - Fully automated, paginated client for NYC Open Data Socrata API (`dzvt-6g3v`).
-  - Raw immutable snapshot storage in `data/raw/`.
-  - Incremental refresh, metadata capture, and offline fallback.
-- [x] **Phase 3: Data Cleaning & Feature Engineering**
-  - Schema validation rejecting malformed payloads.
-  - Full preservation of legitimate duplicate rows (§11.3) and extreme delays (§12.3).
-  - Feature derivations: temporal fields (`year`, `month`, `year_month`, `date`, `hour`, `day_of_week`, `time_period`), policy flags (`is_300s_or_more`, `is_oti_language`), and `wait_category`.
-  - Comprehensive Data Quality Audit report in `data/metadata/data_quality_report.json`.
-  - Columnar Parquet persistence with DuckDB analytics integration.
-- [x] **Phase 4: Statistical Analysis Engine**
-  - Descriptive statistics (Mean, Median, Std Dev, Min, Max, IQR, P90, P95, count >= 300s, % >= 300s).
-  - Language-wise breakdown and comparative ranking with minimum sample warnings.
-  - Temporal analysis (diurnal 24-hr profiles, weekly profiles, and 2D hour-by-weekday heatmap matrix).
-  - Non-parametric inferential testing: Kruskal-Wallis H-test with $\epsilon^2$ effect size, pairwise Mann-Whitney U tests with Bonferroni correction and rank-biserial correlation.
-  - Policy assessment: OTI 30s benchmark comparison and §23-310 statutory threshold rate analysis.
-- [x] **Phase 5 (Initiated): Streamlit Interactive Research Application**
-  - `app.py`: Central hub with global sidebar filters (Date range, Language multi-select, Time period, Day of week).
-  - `pages/1_Overview.py`: Executive KPI metrics, monthly trajectories, wait-time category distributions, top-language comparisons.
-  - `pages/2_Language_Analysis.py`: Language ranking tables, boxplots, Kruskal-Wallis & Mann-Whitney testing tabs.
-  - `pages/3_Temporal_Analysis.py`: Diurnal patterns, volume vs threshold rates, interactive hour-by-weekday heatmap.
-  - `pages/4_Distribution_and_Policy.py`: Mean-vs-Median disparity table, ECDF log-curves, OTI 30s target evaluation, §23-310 breakdown.
-  - `pages/5_Data_Quality_and_Research.py`: Real-time Data Quality Report viewer, research question mapping, data dictionary, and CSV export tools.
-- [x] **Automated Test Suite:** 15 unit and integration tests passing in `tests/`.
+- [x] **Phase 0–5 (Core Platform & Full Dataset):**
+  - Complete **1,061,195** raw records (`1,061,097` validated, `112` languages, Jan 2023 – Oct 2026) ingested from NYC Open Data (`dzvt-6g3v`).
+  - Full 5-page interactive Streamlit BI dashboard with DuckDB & Parquet warehouse.
+- [x] **Phase 6: Research Comparison & Sensitivity Analysis:**
+  - Mean-only vs. distribution-sensitive metric ranking shifts (`src/analytics/comparison_analysis.py`).
+  - Empirical detection of similar-mean, divergent-tail language pairs (e.g., Turkish vs. Yiddish).
+  - 95% confidence intervals (Normal/t, Bootstrap quantiles, Wilson score proportions).
+  - Sample-size cutoff sensitivity (`30, 50, 100, 500, 1000`) & temporal year-by-year sensitivity (`2023–2026`).
+- [x] **Phase 7: Documentation & Publication Preparation:**
+  - Publication-ready CSV tables and PNG figures in `research/results/tables/` and `research/results/figures/`.
+  - Complete empirical findings & RQ1–RQ4 discussion in `research/results/research_findings_and_discussion.md`.
+  - IEEE-format manuscript draft in `research/results/ieee_paper_draft.md`.
+  - Reproducibility metadata JSON & PNG/CSV exports integrated into the UI (`src/utils/exports.py`).
+- [x] **Automated Test Suite:** 20 unit and integration tests passing in `tests/` (including offline fallback & export tests).
 
 ---
 
