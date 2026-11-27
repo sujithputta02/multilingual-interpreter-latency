@@ -62,6 +62,7 @@ def render_global_slicers() -> Tuple[pd.DataFrame, pd.DataFrame]:
         st.session_state["slicer_period"] = "All Periods"
         st.session_state["slicer_dow"] = "All Days"
         st.session_state["slicer_tier"] = "All Calls"
+        st.session_state["action_month"] = None
         st.rerun()
 
     # Year slicer
@@ -120,6 +121,9 @@ def render_global_slicers() -> Tuple[pd.DataFrame, pd.DataFrame]:
         mask &= (df["connect_time_sec"] > 30.0)
     elif selected_tier == "Statutory Review (≥300s)":
         mask &= (df["connect_time_sec"] >= 300.0)
+    action_month = st.session_state.get("action_month")
+    if action_month:
+        mask &= (df["year_month"] == action_month)
 
     filtered_df = df[mask]
 

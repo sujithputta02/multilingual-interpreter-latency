@@ -1,4 +1,4 @@
-"""Page 1: Executive Overview & Interactive Cross-Filtering (PRD Section 13.1)."""
+"""Page 1: Executive Overview with Tableau-Style Global Dashboard Actions (PRD Section 13.1)."""
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -20,40 +20,27 @@ if raw_df.empty:
 
 render_banner(
     "1. Executive Research Overview",
-    "Interactive Performance Scorecard with Click-to-Filter Language Cross-Filtering",
+    "Tableau-Style Interactive Dashboard: Tap Any Chart Element to Filter All Views Globally",
     badge="Executive BI View"
 )
-render_active_filter_strip(len(df), len(raw_df))
 
-if df.empty:
-    st.warning("⚠️ No records match your active slicers.")
-    st.stop()
-
-# Interactive Language Cross-Filter Action
-focus_lang = st.session_state.get("overview_focus_lang")
-top_langs_list = df["language"].value_counts().head(8).index.tolist()
-
-fc1, fc2 = st.columns([4, 1])
-with fc1:
-    chosen_focus = st.selectbox(
-        "🎯 Cross-Filter Focus Language (or click any bar below):",
-        options=["All Active Languages"] + top_langs_list,
-        index=(["All Active Languages"] + top_langs_list).index(focus_lang) if focus_lang in top_langs_list else 0,
-    )
-    if chosen_focus == "All Active Languages":
-        st.session_state["overview_focus_lang"] = None
-        view_df = df
-    else:
-        st.session_state["overview_focus_lang"] = chosen_focus
-        view_df = df[df["language"] == chosen_focus]
-with fc2:
-    st.markdown("<div style='height: 26px;'></div>", unsafe_allow_html=True)
-    if st.button("Clear Focus", use_container_width=True):
-        st.session_state["overview_focus_lang"] = None
+# Filter strip + Clear Actions button
+f_col, b_col = st.columns([6, 1])
+with f_col:
+    render_active_filter_strip(len(df), len(raw_df))
+with b_col:
+    if st.button("🧹 Clear Actions", use_container_width=True):
+        st.session_state["slicer_langs"] = []
+        st.session_state["slicer_tier"] = "All Calls"
+        st.session_state["action_month"] = None
         st.rerun()
 
-# Executive KPI Grid (dynamically reflects cross-filter!)
-stats = calculate_descriptive_stats(view_df["connect_time_sec"])
+if df.empty:
+    st.warning("⚠️ No records match your active slicers/actions. Click **Clear Actions** or **Reset All**.")
+    st.stop()
+
+# Executive KPI Grid (always reflects ALL active global slicers & chart actions!)
+stats = calculate_descriptive_stats(df["connect_time_sec"])
 k1, k2, k3, k4, k5, k6 = st.columns(6)
 
 mean_v = stats.get("mean")
@@ -63,7 +50,7 @@ p95_v = stats.get("p95")
 div_subtext = f"Divergence: {mean_v - median_v:.1f}s" if (mean_v is not None and median_v is not None) else "No data"
 
 with k1:
-    render_kpi("Connected Calls", f"{stats['count']:,}", st.session_state.get("overview_focus_lang") or "Active Slice", "Total", "info")
+    render_kpi("Connected Calls", f"{stats['count']:,}", f"{df['language'].nunique()} languages", "Total", "info")
 with k2:
     render_kpi("Mean Wait Time", f"{mean_v}s" if mean_v is not None else "N/A", "Arithmetic Average", "Mean", "info")
 with k3:
@@ -80,25 +67,38 @@ col_left, col_right = st.columns([3, 2])
 with col_left:
     with st.container(border=True):
         st.subheader("Monthly Waiting-Time Trajectory")
-        st.caption("Mean, Median, and P90 tail latency across months vs. the NYC OTI 30s Target.")
-        monthly_df = compute_monthly_trend(view_df)
+        st.caption("💡 Tap any month point to filter all charts & KPIs to that month.")
+        monthly_df = compute_monthly_trend(df)
         if not monthly_df.empty:
             fig_trend = go.Figure()
             fig_trend.add_trace(go.Scatter(x=monthly_df["year_month"], y=monthly_df["mean"], mode="lines+markers", name="Mean (s)", line=dict(color="#2563eb", width=3)))
             fig_trend.add_trace(go.Scatter(x=monthly_df["year_month"], y=monthly_df["median"], mode="lines+markers", name="Median (s)", line=dict(color="#10b981", width=2, dash="dash")))
             fig_trend.add_trace(go.Scatter(x=monthly_df["year_month"], y=monthly_df["p90"], mode="lines+markers", name="P90 Tail (s)", line=dict(color="#f59e0b", width=2, dash="dot")))
             fig_trend.add_hline(y=30.0, line_dash="dash", line_color="#ef4444", annotation_text="OTI 30s Target", annotation_position="bottom right")
-            fig_trend.update_layout(template="plotly_white", xaxis_title="Month", yaxis_title="Seconds", hovermode="x unified", legend=dict(orientation="h", y=1.12, x=0), margin=dict(l=15, r=15, t=25, b=15))
-            st.plotly_chart(fig_trend, use_container_width=True)
+            fig_trend.update_layout(
+                template="plotly_white", paper_bgcolor="white", plot_bgcolor="white",
+                font=dict(color="#0f172a"), clickmode="event+select",
+                xaxis_title="Month", yaxis_title="Seconds", hovermode="x unified",
+                legend=dict(orientation="h", y=1.12, x=0), margin=dict(l=15, r=15, t=25, b=15)
+            )
+            sel_m = st.plotly_chart(fig_trend, use_container_width=True, on_select="rerun", key="ov_month_select")
+            if sel_m and sel_m.get("selection") and sel_m["selection"].get("points"):
+                clicked_m = sel_m["selection"]["points"][0].get("x")
+                if clicked_m:
+                    st.session_state["action_month"] = None if st.session_state.get("action_month") == clicked_m else clicked_m
+                    st.rerun()
         else:
             st.info("Insufficient monthly data.")
 
 with col_right:
     with st.container(border=True):
-        st.subheader("Wait-Time Tier Distribution")
-        st.caption("Call share categorized by connection duration tiers.")
-        cat_counts = view_df["wait_category"].value_counts().reset_index()
+        st.subheader("Wait-Time Tier Breakdown")
+        st.caption("💡 Tap any tier bar to filter all charts & KPIs by latency tier.")
+        cat_counts = df["wait_category"].value_counts().reset_index()
         cat_counts.columns = ["Category", "Calls"]
+        tier_order = ["0-30s (Within Goal)", "31-60s", "61-120s", "121-299s", ">=300s (Statutory Review)"]
+        cat_counts["order"] = cat_counts["Category"].apply(lambda c: tier_order.index(c) if c in tier_order else 99)
+        cat_counts = cat_counts.sort_values("order")
         color_map = {
             "0-30s (Within Goal)": "#10b981",
             "31-60s": "#3b82f6",
@@ -106,26 +106,50 @@ with col_right:
             "121-299s": "#f97316",
             ">=300s (Statutory Review)": "#ef4444"
         }
-        fig_cat = px.pie(cat_counts, names="Category", values="Calls", hole=0.55, color="Category", color_discrete_map=color_map)
-        fig_cat.update_traces(textposition="inside", textinfo="percent+label")
-        fig_cat.update_layout(template="plotly_white", showlegend=False, margin=dict(l=10, r=10, t=10, b=10))
-        st.plotly_chart(fig_cat, use_container_width=True)
+        fig_tier = px.bar(
+            cat_counts, x="Calls", y="Category", orientation="h",
+            color="Category", color_discrete_map=color_map, text="Calls"
+        )
+        fig_tier.update_traces(texttemplate="%{text:,}", textposition="outside")
+        fig_tier.update_layout(
+            template="plotly_white", paper_bgcolor="white", plot_bgcolor="white",
+            font=dict(color="#0f172a"), showlegend=False, clickmode="event+select",
+            yaxis_title="", xaxis_title="Connected Calls", margin=dict(l=10, r=40, t=15, b=15)
+        )
+        sel_t = st.plotly_chart(fig_tier, use_container_width=True, on_select="rerun", key="ov_tier_select")
+        if sel_t and sel_t.get("selection") and sel_t["selection"].get("points"):
+            clicked_tier = sel_t["selection"]["points"][0].get("y")
+            if clicked_tier == "0-30s (Within Goal)":
+                st.session_state["slicer_tier"] = "Within 30s Goal (≤30s)"
+                st.rerun()
+            elif clicked_tier == ">=300s (Statutory Review)":
+                st.session_state["slicer_tier"] = "Statutory Review (≥300s)"
+                st.rerun()
+            elif clicked_tier in {"31-60s", "61-120s", "121-299s"}:
+                st.session_state["slicer_tier"] = "Delayed (>30s)"
+                st.rerun()
 
 with st.container(border=True):
-    st.subheader("Top Requested Languages: Click a Bar to Cross-Filter")
+    st.subheader("Top Requested Languages: Mean vs. P95 Tail Latency")
+    st.caption("💡 Tap any language bar to filter the entire dashboard to that language.")
     lang_sum = compute_language_summary(df, min_sample_size=20, sort_by="count", ascending=False).head(10)
     if not lang_sum.empty:
         fig_bar = go.Figure()
         fig_bar.add_trace(go.Bar(x=lang_sum["language"], y=lang_sum["mean"], name="Mean Wait", marker_color="#2563eb"))
         fig_bar.add_trace(go.Bar(x=lang_sum["language"], y=lang_sum["median"], name="Median (P50)", marker_color="#10b981"))
         fig_bar.add_trace(go.Bar(x=lang_sum["language"], y=lang_sum["p95"], name="Tail Latency (P95)", marker_color="#ef4444"))
-        fig_bar.update_layout(template="plotly_white", barmode="group", clickmode="event+select", xaxis_title="Language", yaxis_title="Seconds", legend=dict(orientation="h", y=1.12, x=0), margin=dict(l=15, r=15, t=25, b=15))
+        fig_bar.update_layout(
+            template="plotly_white", paper_bgcolor="white", plot_bgcolor="white",
+            font=dict(color="#0f172a"), barmode="group", clickmode="event+select",
+            xaxis_title="Language", yaxis_title="Seconds", legend=dict(orientation="h", y=1.12, x=0), margin=dict(l=15, r=15, t=25, b=15)
+        )
 
         selection = st.plotly_chart(fig_bar, use_container_width=True, on_select="rerun", key="overview_bar_select")
         if selection and selection.get("selection") and selection["selection"].get("points"):
             clicked_lang = selection["selection"]["points"][0].get("x")
-            if clicked_lang and clicked_lang != st.session_state.get("overview_focus_lang"):
-                st.session_state["overview_focus_lang"] = clicked_lang
+            if clicked_lang:
+                cur = st.session_state.get("slicer_langs", [])
+                st.session_state["slicer_langs"] = [] if cur == [clicked_lang] else [clicked_lang]
                 st.rerun()
 
         display_tbl = lang_sum[[

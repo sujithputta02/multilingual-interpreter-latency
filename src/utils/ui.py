@@ -200,12 +200,15 @@ def render_active_filter_strip(filtered_count: int, total_count: int):
     period = st.session_state.get("slicer_period", "All Periods")
     dow = st.session_state.get("slicer_dow", "All Days")
     tier = st.session_state.get("slicer_tier", "All Calls")
+    month = st.session_state.get("action_month")
 
     lang_lbl = ", ".join(langs[:3]) + (f" (+{len(langs)-3})" if len(langs) > 3 else "") if langs else "All 112 Languages"
+    month_badge = f'<span class="bi-badge-danger">Month Action: {month}</span>' if month else ""
     st.markdown(f"""
     <div class="bi-filter-strip">
         <strong>Active Slicers:</strong>
         <span class="bi-badge-info">Year: {yr}</span>
+        {month_badge}
         <span class="bi-badge-info">Languages: {lang_lbl}</span>
         <span class="bi-badge-info">Window: {period}</span>
         <span class="bi-badge-info">Day: {dow}</span>

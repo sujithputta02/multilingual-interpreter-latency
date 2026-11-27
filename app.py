@@ -88,19 +88,33 @@ def main():
     with k5:
         render_kpi("Calls ≥ 300s", f"{stats['long_wait_count']:,}", f"{stats['long_wait_percentage']}% of slice", "§23-310", "danger" if stats["long_wait_percentage"] > 0.2 else "warning")
 
-    # 2-Column Live BI Visual Preview
+    # 2-Column Live BI Visual Preview with Tableau-Style Click Actions
     col_l, col_r = st.columns([3, 2])
     with col_l:
         with st.container(border=True):
             st.subheader("Top Languages: Mean vs. P95 Tail Latency")
+            st.caption("💡 Tap any language bar to filter the entire dashboard to that language (tap again or Reset All to clear).")
             lang_sum = compute_language_summary(filtered_df, min_sample_size=10, sort_by="count", ascending=False).head(7)
             if not lang_sum.empty:
                 fig = go.Figure()
                 fig.add_trace(go.Bar(x=lang_sum["language"], y=lang_sum["mean"], name="Mean (s)", marker_color="#2563eb"))
                 fig.add_trace(go.Bar(x=lang_sum["language"], y=lang_sum["p95"], name="P95 Tail (s)", marker_color="#ef4444"))
                 fig.add_hline(y=30.0, line_dash="dash", line_color="#10b981", annotation_text="OTI 30s Goal")
-                fig.update_layout(template="plotly_white", barmode="group", height=320, margin=dict(l=15, r=15, t=20, b=15), legend=dict(orientation="h", y=1.12))
-                st.plotly_chart(fig, use_container_width=True)
+                fig.update_layout(
+                    template="plotly_white", paper_bgcolor="white", plot_bgcolor="white",
+                    font=dict(color="#0f172a"), barmode="group", clickmode="event+select",
+                    height=320, margin=dict(l=15, r=15, t=25, b=15), legend=dict(orientation="h", y=1.12)
+                )
+                sel = st.plotly_chart(fig, use_container_width=True, on_select="rerun", key="home_lang_bar")
+                if sel and sel.get("selection") and sel["selection"].get("points"):
+                    clicked = sel["selection"]["points"][0].get("x")
+                    if clicked:
+                        cur = st.session_state.get("slicer_langs", [])
+                        if cur == [clicked]:
+                            st.session_state["slicer_langs"] = []
+                        else:
+                            st.session_state["slicer_langs"] = [clicked]
+                        st.rerun()
 
     with col_r:
         with st.container(border=True):
